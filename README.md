@@ -31,6 +31,8 @@ Windowsの場合は```gswin64c```を用いる．
 2. ASP_Converterを実行する
 3. ターミナルに表示された指示に従う．
 
+スクリーンショット撮影中に問題が発生した場合，強制終了したい場合はescキーを押す．その他の状況の場合はターミナルでctrl+cを押す．
+
 ### モジュール
 pynput, pillow, pyautogui, natsort, opencv-python, img2pdfx
 
