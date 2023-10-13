@@ -23,8 +23,6 @@ output_pdf = True
 open_pdf = True
 # PDFファイル生成後，GhostScriptを用いて圧縮する場合はTrue, しない場合はFalse
 compress_pdf = True #時間はかかるが，推奨．
-# Windowsの場合，GhostScriptの実行ファイルのPATHをここにペースト
-gs_path = "C:\gs\gs10.02.0\bin\gswin64c.exe"
 
 ##################################################
 # 自動スクリーンキャプチャの設定
@@ -233,7 +231,7 @@ if output_pdf == True:
 if compress_pdf == True:
     print("＜PDF圧縮開始＞")
     if platform.system() == "Windows":
-        gs_command = repr(gs_path)
+        gs_command = "gswin64c"
     else:
         gs_command = 'gs'
     output_file_compressed = str(output_file).replace('.pdf','_compressed.pdf')
@@ -246,6 +244,7 @@ if compress_pdf == True:
 #########################
 
 original_size = os.path.getsize(output_file)
+
 print(f'\n出力ファイル容量: {original_size/1024/1024:.3f} MB')
 if compress_pdf == True:
     compressed_size = os.path.getsize(output_file_compressed)
@@ -255,6 +254,6 @@ t1 = time.time()
 seconds = round(t1-t0,2)
 minutes, seconds =divmod(seconds,60)
 hours, minutes=divmod(minutes,60)
-print(f"経過時間:{hours}時間{minutes}分{seconds:.2f}秒")
+print(f"経過時間:{hours}時間{minutes}分{seconds:.2f}秒") 
 
 print('ーーーーーASP Converter終了ーーーーー\n')
