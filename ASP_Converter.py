@@ -5,7 +5,7 @@
 # PDFファイル名，頭文字
 ##################################################
 
-pdf_header = "テスト" # 生成するPDFファイルとフォルダの頭文字に使用する
+pdf_header = "test" # 生成するPDFファイルとフォルダの頭文字に使用する
 
 ##################################################
 # モード切り替え
@@ -36,7 +36,7 @@ page = 1
 # 見開きのページを分割して1ページずつPDF化する場合はTrue，しない場合はFalse
 split = True # 見開きのページを分割する場合，解像度が落ちるので注意
 # 表紙の枚数（見開きの本のとき，最初に中央寄りのページが何枚か）
-dont_split = 2
+dont_split = 1
 
 # スクショ間隔(秒)
 span = 1
@@ -60,12 +60,19 @@ if coordinate_setup == False:
 #############################プログラム開始(以降いじらない)###########################
 import time,os,platform,glob,subprocess,datetime,webbrowser,threading #標準ライブラリ
 import img2pdf,cv2,pyautogui
+from pathlib import Path
 from pynput import mouse,keyboard
 from natsort import natsorted
 from PIL import ImageGrab,Image
 
 print('\nーーーーーASP Converter開始ーーーーー\n')
 t0 = time.time()
+
+# 出力フォルダ作成(フォルダ名：頭文字_年月日時分秒)
+root = Path.cwd()
+folder_name = Path(root, "OUTPUT", pdf_header + "_" + str(datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
+Path(root, "OUTPUT").mkdir(exist_ok=True)
+Path(folder_name).mkdir(exist_ok=True)
 
 if coordinate_setup == True:
     #########################
@@ -80,8 +87,9 @@ if coordinate_setup == True:
     print('キャプチャ範囲の右下座標に合わせて2を')
     if manual_mode == 'click':print('マウスクリックでページ間を移動する際に，クリックする座標に合わせて3を')
     print("押してください．")
-    print("全て完了したらshiftを押してください．")
-    
+    print("全て完了したらenterを押してください．")
+    print("座標は何度でも上書き可能です．")
+
     # 押されたキーを確認
     def press0(key):
         global position1, position2, position3
@@ -96,7 +104,7 @@ if coordinate_setup == True:
             elif manual_mode == 'click' and key.char == '3':
                 position3=mouse.Controller().position
                 print(' クリック座標：{}'.format(position3))
-        if key == keyboard.Key.shift:
+        if key == keyboard.Key.enter:
             if manual_mode == 'click' and 'position1' in globals() and 'position2' in globals() and 'position3' in globals():
                 print('全ての座標を取得しました．\n')
                 return False
@@ -119,11 +127,6 @@ if wait_for_setup > 0:
 #########################
 # スクリーンショット自動処理
 #########################
-
-# 出力フォルダ作成(フォルダ名：頭文字_年月日時分秒)
-root = "."
-folder_name = "./OUTPUT/" + pdf_header + "_" + str(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
-os.makedirs(folder_name,exist_ok=True)
 
 # ページ数分スクリーンショットをとる
 print("＜スクリーンキャプチャ開始＞")
@@ -156,26 +159,26 @@ def screencapture():
         # 出力ファイル名(頭文字_連番.png)
         out_filename1 = h_filename + "_" + str(i).zfill(4) + '.png'
         out_filename2 = h_filename + "_" + str(i+1).zfill(4) + '.png'
-        
+
         # スクリーンショット取得・保存処理
         if split == False:
             # キャプチャ範囲： 左上のx座標, 左上のy座標, 右下のx座標, 右下のy座標
             cbox = (round(x1),round(y1),round(x2),round(y2))
             screenshot = capture(cbox)
             # 出力パス： 出力フォルダ名 / 出力ファイル名
-            screenshot.save(folder_name + '/' + out_filename1,optimize=True);i+=1
+            screenshot.save(Path(folder_name, out_filename1),optimize=True);i+=1
         elif split == True and i < dont_split+1:
             cbox = (round(x1+(x2-x1)/4),round(y1),round(x1+(x2-x1)*3/4),round(y2))
             screenshot = capture(cbox)
-            screenshot.save(folder_name + '/' + out_filename1,optimize=True);i+=1
+            screenshot.save(Path(folder_name, out_filename1),optimize=True);i+=1
         elif split == True and i > dont_split:
             cbox = (round(x1),round(y1),round(x1+(x2-x1)/2),round(y2))
             screenshot = capture(cbox)
-            screenshot.save(folder_name + '/' + out_filename1,optimize=True);
+            screenshot.save(Path(folder_name, out_filename1),optimize=True);
             cbox = (round(x1+(x2-x1)/2),round(y1),round(x2),round(y2))
             screenshot = capture(cbox)
-            screenshot.save(folder_name + '/' + out_filename2,optimize=True);i+=2
-        
+            screenshot.save(Path(folder_name, out_filename2),optimize=True);i+=2
+
         # 次のページへの操作
         if p < page-1:
             if manual_mode == 'click':
@@ -184,10 +187,10 @@ def screencapture():
             else:
                 line = 'keyboard.Controller().tap(keyboard.Key.'+manual_mode+')'
                 exec(line)
-        
+
         # 次のスクリーンショットまで待機
         time.sleep(span)
-        
+
         #ESCキーで途中で中断
         if paused == True:
             break
@@ -206,7 +209,7 @@ print("＜スクリーンキャプチャ終了＞")
 if output_pdf == True:
     print("＜PDF化開始＞")
     # 画像一覧を取得
-    lists = list(glob.glob(folder_name + "/*.png"))
+    lists = list(glob.glob(str(Path(folder_name, "*.png"))))
 
     # 透過チャンネルがある場合に削除する処理
     for filename in lists:
@@ -217,10 +220,10 @@ if output_pdf == True:
 
     # PDFファイルを出力
     filename = pdf_header + "_" + str(datetime.datetime.now().strftime("%Y%m%d%H%M%S")) + ".pdf"
-    output_file = "./OUTPUT/" + filename
+    output_file = Path(root, "OUTPUT", filename)
     with open(output_file,"wb") as f:
         f.write(img2pdf.convert([str(i) for i in natsorted(lists) if ".png" in i]))
-    if open_pdf == True:webbrowser.open(output_file)
+    if open_pdf == True:output_file.open("r")
     print("＜PDF化終了＞")
 
 #########################
@@ -233,7 +236,7 @@ if compress_pdf == True:
         gs_command = repr(gs_path)
     else:
         gs_command = 'gs'
-    output_file_compressed = output_file.replace('.pdf','_compressed.pdf')
+    output_file_compressed = str(output_file).replace('.pdf','_compressed.pdf')
     arg1= '-sOutputFile=' + output_file_compressed
     p = subprocess.run([gs_command, '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS=/ebook', '-dNOPAUSE', '-dBATCH',  '-dQUIET', arg1, output_file],stdout=subprocess.PIPE)
     print("＜PDF圧縮終了＞")
