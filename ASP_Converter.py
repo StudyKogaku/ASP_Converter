@@ -1,4 +1,4 @@
-# Auto Screencapture and PDF Converter
+# Auto Screencapture and PDF Converter, version 1.3
 # 電子書籍や資料などを自動で一枚ずつスクリーンショットを撮り，PDF化，PDF圧縮を行うプログラム
 
 ##################################################
@@ -56,7 +56,7 @@ if coordinate_setup == False:
 
 
 #############################プログラム開始(以降いじらない)###########################
-import time,os,platform,glob,subprocess,datetime,webbrowser,threading #標準ライブラリ
+import time,os,platform,glob,subprocess,datetime,threading #標準ライブラリ
 import img2pdf,cv2,pyautogui
 from pathlib import Path
 from pynput import mouse,keyboard
@@ -221,7 +221,9 @@ if output_pdf == True:
     output_file = Path(root, "OUTPUT", filename)
     with open(output_file,"wb") as f:
         f.write(img2pdf.convert([str(i) for i in natsorted(lists) if ".png" in i]))
-    if open_pdf == True:output_file.open("r")
+    if open_pdf == True and compress_pdf == False:
+        if platform.system() == "Windows": subprocess.Popen([output_file], shell=True)
+        else: subprocess.run(['open', output_file], check=True)
     print("＜PDF化終了＞")
 
 #########################
@@ -237,6 +239,10 @@ if compress_pdf == True:
     output_file_compressed = str(output_file).replace('.pdf','_compressed.pdf')
     arg1= '-sOutputFile=' + output_file_compressed
     p = subprocess.run([gs_command, '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS=/ebook', '-dNOPAUSE', '-dBATCH',  '-dQUIET', arg1, output_file],stdout=subprocess.PIPE)
+    if open_pdf == True and compress_pdf == True:
+        op1 = Path(str(output_file_compressed))
+        if platform.system() == "Windows": subprocess.Popen([op1], shell=True)
+        else: subprocess.run(['open', op1], check=True)
     print("＜PDF圧縮終了＞")
 
 #########################
